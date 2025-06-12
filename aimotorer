@@ -1,0 +1,254 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, ArrowRight } from 'lucide-react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Points, PointMaterial } from '@react-three/drei';
+import * as random from 'maath/random/dist/maath-random.esm';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
+// Data
+const engineData = {
+  sales: {
+    title: "Mötes-AI",
+    description: "Transkriberar, sammanfattar och agerar på varje säljsamtal – så ert team kan frigöra tid och fokusera på att stänga affärer, inte på administration.",
+    hoursSaved: 45,
+    efficiencyGain: 25,
+    tasks: ['Automatisk transkribering', 'Sammanfattningar & anteckningar', 'Generering av uppföljningsmail', 'Skapande av uppgifter i CRM']
+  },
+  marketing: {
+    title: "Innehålls-AI",
+    description: "Omvandlar ett enda blogginlägg eller en podcast till en hel månads innehåll för sociala medier. Sluta skapa från grunden, börja skala smart.",
+    hoursSaved: 60,
+    efficiencyGain: 40,
+    tasks: ['Återanvänder långt innehåll', 'Skriver inlägg för sociala medier', 'Genererar utkast till nyhetsbrev', 'Skapar annonsvarianter']
+  },
+  leadership: {
+    title: "Briefing-AI",
+    description: "Skannar era interna kanaler varje morgon och levererar en knivskarp 3-punkts sammanfattning av dagens viktigaste händelser, risker och möjligheter.",
+    hoursSaved: 25,
+    efficiencyGain: 60,
+    tasks: ['Sammanfattar interna kanaler', 'Identifierar dagens prioriteringar', 'Varnar för potentiella risker', 'Levererar en daglig "brief"']
+  }
+};
+
+// --- Three.js Components for Animated Background ---
+function Starfield(props) {
+  const ref = useRef();
+  const [sphere] = useState(() => random.inSphere(new Float32Array(5000), { radius: 1.5 }));
+  useFrame((state, delta) => {
+    ref.current.rotation.x -= delta / 10;
+    ref.current.rotation.y -= delta / 15;
+  });
+  return (
+    <group rotation={[0, 0, Math.PI / 4]}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
+        <PointMaterial
+          transparent
+          color="#D5FF00"
+          size={0.005}
+          sizeAttenuation={true}
+          depthWrite={false}
+        />
+      </Points>
+    </group>
+  );
+}
+
+// --- UI Components ---
+const EngineCard = ({ id, title, description, active, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`engine-card p-6 rounded-lg border-2 cursor-pointer transition-all duration-300 ${
+      active ? 'bg-lime-900/20 border-lime-300 scale-105' : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'
+    }`}
+  >
+    <h3 className="text-xl font-bold text-white">{title}</h3>
+    <p className="text-slate-400 mt-2">{description}</p>
+  </div>
+);
+
+const ProcessStep = ({ number, title, children }) => (
+  <div className="process-step text-center">
+    <div className="w-16 h-16 mx-auto flex items-center justify-center border-2 border-lime-300/50 rounded-full mb-4">
+      <span className="text-2xl font-bold text-lime-300">{number}</span>
+    </div>
+    <h3 className="text-2xl font-bold text-white">{title}</h3>
+    <p className="text-slate-400 mt-2 max-w-xs mx-auto">{children}</p>
+  </div>
+);
+
+
+const EfficiencyChart = ({ gain }) => {
+  const data = {
+    labels: ['Effektivitetsökning', 'Återstående'],
+    datasets: [
+      {
+        data: [gain, 100 - gain],
+        backgroundColor: ['#D5FF00', 'rgba(213, 255, 0, 0.1)'],
+        borderColor: '#0A0A0A',
+        borderWidth: 4,
+      },
+    ],
+  };
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '80%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+    },
+  };
+  return <Doughnut data={data} options={options} />;
+};
+
+
+// --- Main App Component ---
+export default function App() {
+  const [activeEngine, setActiveEngine] = useState('sales');
+  const currentEngineData = engineData[activeEngine];
+
+  useEffect(() => {
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+  }, []);
+
+  return (
+    <div className="bg-[#0A0A0A] text-slate-200 font-sans leading-relaxed">
+      <div className="fixed top-0 left-0 w-full h-full z-0">
+        <Canvas camera={{ position: [0, 0, 1] }}>
+          <Starfield />
+        </Canvas>
+      </div>
+
+      <div className="relative z-10">
+        <header className="fixed top-0 left-0 w-full z-50 bg-black/30 backdrop-blur-md">
+            <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white tracking-tighter">aimotorer.se</h2>
+                <a href="#boka" className="cta-button bg-lime-300 text-black font-bold py-2 px-6 rounded-full text-sm sm:text-base hover:bg-white">
+                    Boka Samtal
+                </a>
+            </div>
+        </header>
+
+        <main className="container mx-auto px-6">
+          <section className="h-screen flex flex-col justify-center items-center text-center">
+            <h1 className="text-5xl md:text-8xl font-extrabold text-white leading-tight tracking-tighter">
+              Bygg system.<br />Inte bara <span className="text-lime-300">program</span>.
+            </h1>
+            <p className="text-lg md:text-xl max-w-2xl mx-auto text-slate-400 mt-8">
+              Vi installerar skräddarsydda AI-motorer som frigör ert företags fulla potential och ger er kontrollen tillbaka.
+            </p>
+             <a href="#losningen" className="mt-10 text-lime-300 font-semibold flex items-center gap-2 group">
+              Upptäck hur <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </a>
+          </section>
+
+          <section className="py-20 md:py-32">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tighter">
+                Standardverktyg har nått sin gräns.
+              </h2>
+              <p className="text-lg text-slate-400 mt-6">
+                Manuella processer, gissningsbaserad marknadsföring och rigida system är inte längre hållbart. Framtiden tillhör företag som äger sin egen intelligens.
+              </p>
+            </div>
+          </section>
+          
+          <section id="losningen" className="py-20 md:py-32">
+            <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tighter">Lösningen: En <span className="text-lime-300">AI-Motor</span>.</h2>
+                <p className="text-lg text-slate-400 mt-4 max-w-2xl mx-auto">En skräddarsydd AI-assistent som integreras i hjärtat av er verksamhet.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+              <EngineCard 
+                id="sales" 
+                title="Mötes-AI" 
+                description="För säljteam som vill stänga fler affärer." 
+                active={activeEngine === 'sales'} 
+                onClick={() => setActiveEngine('sales')} 
+              />
+              <EngineCard 
+                id="marketing" 
+                title="Innehålls-AI" 
+                description="För marknadsteam som vill skala smart." 
+                active={activeEngine === 'marketing'} 
+                onClick={() => setActiveEngine('marketing')} 
+              />
+              <EngineCard 
+                id="leadership" 
+                title="Briefing-AI" 
+                description="För ledare som behöver total överblick." 
+                active={activeEngine === 'leadership'} 
+                onClick={() => setActiveEngine('leadership')} 
+              />
+            </div>
+            <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-800 p-8 rounded-2xl grid grid-cols-1 lg:grid-cols-5 gap-8 items-center min-h-[350px]">
+                <div className="lg:col-span-2">
+                    <h3 className="text-3xl font-bold text-white tracking-tight">{currentEngineData.title}</h3>
+                    <p className="mt-4 text-slate-300">{currentEngineData.description}</p>
+                    <ul className="mt-6 space-y-2 text-lime-300/80">
+                      {currentEngineData.tasks.map(task => <li key={task} className="flex items-center gap-2"><span className="text-lime-300">✓</span>{task}</li>)}
+                    </ul>
+                </div>
+                <div className="lg:col-span-3 h-full flex items-center justify-center">
+                    <div className="w-full h-64 chart-container">
+                       <div className="relative w-48 h-48 mx-auto">
+                         <EfficiencyChart gain={currentEngineData.efficiencyGain} />
+                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                            <span className="text-4xl font-bold text-white">{currentEngineData.efficiencyGain}%</span>
+                            <span className="text-sm text-slate-400">Effektivitetsökning</span>
+                        </div>
+                       </div>
+                    </div>
+                </div>
+            </div>
+          </section>
+
+          <section className="py-20 md:py-40">
+            <div class="text-center mb-20">
+              <h2 class="text-4xl md:text-6xl font-bold text-white tracking-tighter">Från idé till autonomi på <span className="text-lime-300">14 dagar</span>.</h2>
+            </div>
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+              <ProcessStep number="01" title="Diagnos">
+                  Ett 15-minuters samtal där vi identifierar er största operativa flaskhals.
+              </ProcessStep>
+              <ProcessStep number="02" title="Bygge">
+                  Vårt team bygger, tränar och integrerar er skräddarsydda AI-Motor.
+              </ProcessStep>
+              <ProcessStep number="03" title="Resultat">
+                  Vi levererar ett autonomt system som omedelbart börjar spara tid och öka er effektivitet.
+              </ProcessStep>
+            </div>
+          </section>
+
+          <section id="boka" className="py-20 md:py-32 text-center">
+             <div className="bg-lime-300/90 rounded-2xl p-12 text-center text-black">
+                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter">Redo att installera er framtid?</h2>
+                <p className="mt-6 text-lg text-lime-900/80 max-w-2xl mx-auto">Boka ett kostnadsfritt strategisamtal. Inga säljpitchar. Bara en konkret plan för hur AI kan transformera er verksamhet.</p>
+                <a href="mailto:mehdi.fortas@playpace.info?subject=Intresserad av en AI-Motor" className="mt-10 inline-block bg-black text-white font-bold py-4 px-10 rounded-full text-lg hover:bg-slate-800 transition-colors">
+                    Boka ditt samtal
+                </a>
+            </div>
+          </section>
+        </main>
+        
+        <footer class="border-t border-slate-800 mt-20">
+            <div class="container mx-auto px-6 py-8 text-center text-slate-400">
+                <p>&copy; 2025 aimotorer.se | En del av PlayPace Brand & Business Services AB.</p>
+                <p class="text-sm mt-2">Vi bygger autonoma system som ger er kontrollen tillbaka.</p>
+            </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
